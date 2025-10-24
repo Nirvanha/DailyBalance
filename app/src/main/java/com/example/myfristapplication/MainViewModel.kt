@@ -48,6 +48,14 @@ class MainViewModel @Inject constructor(
     private val _expenseRecords = MutableStateFlow<List<DailyExpense>>(emptyList())
     val expenseRecords: StateFlow<List<DailyExpense>> = _expenseRecords
 
+    // Evento para exportar gastos
+    private val _exportExpensesEvent = MutableStateFlow(false)
+    val exportExpensesEvent: StateFlow<Boolean> = _exportExpensesEvent
+
+    // Evento para exportar registros
+    private val _exportRecordsEvent = MutableStateFlow(false)
+    val exportRecordsEvent: StateFlow<Boolean> = _exportRecordsEvent
+
     // Función para solicitar los gastos desde el repositorio
     fun requestExpenseRecords() {
         viewModelScope.launch {
@@ -141,5 +149,21 @@ class MainViewModel @Inject constructor(
 
     fun resetFoodFields() {
         _foodDescription.value = ""
+    }
+
+    fun exportExpensesRequested() {
+        _exportExpensesEvent.value = true
+    }
+
+    fun exportExpensesHandled() {
+        _exportExpensesEvent.value = false
+    }
+
+    fun exportRecordsRequested() {
+        _exportRecordsEvent.value = true
+    }
+
+    fun exportRecordsHandled() {
+        _exportRecordsEvent.value = false
     }
 }

@@ -146,12 +146,14 @@ fun PreviewMainApp() {
 
                 "records" -> RecordsScreen(
                     records = sampleRecords,
-                    onBackClick = { currentScreen = "home" }
+                    onBackClick = { currentScreen = "home" },
+                    onExportClick = { currentScreen = "home" }
                 )
 
                 "expenseRecords" -> ExpenseRecordsScreen(
                     expenseRecords = sampleExpenses,
-                    onBackClick = { currentScreen = "home" }
+                    onBackClick = { currentScreen = "home" },
+                    onExportClick = { currentScreen = "home" }
                 )
             }
 

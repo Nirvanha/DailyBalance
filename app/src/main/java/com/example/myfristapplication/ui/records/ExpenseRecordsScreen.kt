@@ -17,7 +17,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun ExpenseRecordsScreen(expenseRecords: List<DailyExpense>, onBackClick: () -> Unit) {
+fun ExpenseRecordsScreen(expenseRecords: List<DailyExpense>, onBackClick: () -> Unit, onExportClick: () -> Unit) {
     val dateFormat = remember { SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()) }
     Column(
         modifier = Modifier
@@ -36,8 +36,16 @@ fun ExpenseRecordsScreen(expenseRecords: List<DailyExpense>, onBackClick: () -> 
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
-        Button(onClick = onBackClick) {
-            Text("Volver")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(onClick = onBackClick) {
+                Text("Volver")
+            }
+            Button(onClick = onExportClick) {
+                Text("Exportar gastos")
+            }
         }
     }
 }

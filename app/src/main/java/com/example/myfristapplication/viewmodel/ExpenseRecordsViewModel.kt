@@ -20,4 +20,15 @@ class ExpenseRecordsViewModel @Inject constructor(private val dailyExpenseReposi
             _expenseRecords.value = dailyExpenseRepository.getAll()
         }
     }
+
+    fun exportExpensesToCsv(expenses: List<DailyExpense>): String {
+        val header = "Cantidad,Categoría,Fecha,Origen,Nota"
+        val dateFormat = java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss", java.util.Locale.getDefault())
+        val rows = expenses.map { expense ->
+            val formattedDate = dateFormat.format(java.util.Date(expense.date))
+            val note = expense.note?.replace(",", " ") ?: ""
+            "${expense.amount},${expense.category},$formattedDate,${expense.origin},$note"
+        }
+        return (listOf(header) + rows).joinToString("\n")
+    }
 }
