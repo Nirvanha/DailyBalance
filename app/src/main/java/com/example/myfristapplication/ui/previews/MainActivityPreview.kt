@@ -136,7 +136,8 @@ fun PreviewMainApp() {
                         origin = ""
                         showExpenseError = false
                         currentScreen = "home"
-                    }
+                    },
+                    categoryOptions = listOf("Comida", "Transporte", "Ocio", "Otros")
                 )
 
                 "message" -> MessageScreen(

@@ -175,6 +175,7 @@ fun MainApp(
             onRegisterExpenseClick = {
                 val ok = expenseViewModel.registerExpense()
                 if (ok) {
+                    expenseViewModel.reloadCategories() // Recargar categorías tras registrar
                     mainViewModel.setMessage("Gasto diario registrado!")
                     mainViewModel.navigateTo("message")
                 }
@@ -182,7 +183,8 @@ fun MainApp(
             onBackClick = {
                 expenseViewModel.resetFields()
                 mainViewModel.navigateTo("home")
-            }
+            },
+            categoryOptions = expenseViewModel.categoryOptions.collectAsState().value
         )
 
         "message" -> MessageScreen(
@@ -202,7 +204,6 @@ fun MainApp(
             expenseRecords = expenseRecordsViewModel.expenseRecords.collectAsState().value,
             onBackClick = { mainViewModel.navigateTo("home") },
             onExportClick = {
-                // Lanzar intent SAF para exportar
                 mainViewModel.exportExpensesRequested()
             }
         )

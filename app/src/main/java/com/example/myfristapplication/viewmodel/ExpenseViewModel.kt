@@ -27,6 +27,24 @@ class ExpenseViewModel @Inject constructor(private val dailyExpenseRepository: D
     private val _showExpenseError = MutableStateFlow(false)
     val showExpenseError: StateFlow<Boolean> = _showExpenseError
 
+    private val _categoryOptions = MutableStateFlow<List<String>>(emptyList())
+    val categoryOptions: StateFlow<List<String>> = _categoryOptions
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            val expenses = dailyExpenseRepository.getAll()
+            _categoryOptions.value = expenses.map { it.category }.distinct().sorted()
+        }
+    }
+
+    fun reloadCategories() {
+        loadCategories()
+    }
+
     fun setAmountText(text: String) {
         _amountText.value = text
         val parsed = text.toDoubleOrNull()
@@ -64,6 +82,7 @@ class ExpenseViewModel @Inject constructor(private val dailyExpenseRepository: D
             )
             viewModelScope.launch {
                 dailyExpenseRepository.insert(expense)
+                loadCategories()
             }
             resetFields()
             return true
