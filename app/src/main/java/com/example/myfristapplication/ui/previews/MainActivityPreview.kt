@@ -27,7 +27,7 @@ import com.example.myfristapplication.ui.shared.MessageScreen
 // Preview that reproduces MainApp navigation using simple local state and sample data.
 @Composable
 fun PreviewMainApp() {
-    _root_ide_package_.com.example.myfristapplication.ui.theme.MyFristApplicationTheme {
+    _root_ide_package_.com.example.myfristapplication.ui.theme.ApplicationTheme {
         Surface(modifier = Modifier.padding(0.dp), color = MaterialTheme.colorScheme.background) {
             // simple local state to emulate MainViewModel + other viewmodels
             var currentScreen by remember { mutableStateOf("home") }

@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import com.example.myfristapplication.ui.theme.MyFristApplicationTheme
+import com.example.myfristapplication.ui.theme.ApplicationTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
@@ -40,15 +40,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val isDark by themeViewModel.isDarkMode.collectAsState()
-            MyFristApplicationTheme(darkTheme = isDark) {
+            ApplicationTheme(darkTheme = isDark) {
                 MainApp(
                     mainViewModel = mainViewModel,
                     foodViewModel = foodViewModel,
                     expenseViewModel = expenseViewModel,
                     recordsViewModel = recordsViewModel,
-                    expenseRecordsViewModel = expenseRecordsViewModel,
-                    isDarkMode = isDark,
-                    onToggleDarkMode = { enabled -> themeViewModel.setDarkMode(enabled) }
+                    expenseRecordsViewModel = expenseRecordsViewModel
                 )
             }
         }
@@ -62,8 +60,6 @@ fun MainApp(
     expenseViewModel: ExpenseViewModel,
     recordsViewModel: RecordsViewModel,
     expenseRecordsViewModel: ExpenseRecordsViewModel,
-    isDarkMode: Boolean,
-    onToggleDarkMode: (Boolean) -> Unit
 ) {
     val currentScreen by mainViewModel.currentScreen.collectAsState()
     val message by mainViewModel.message.collectAsState()
@@ -96,9 +92,7 @@ fun MainApp(
             onViewExpensesClick = {
                 expenseRecordsViewModel.requestExpenseRecords()
                 mainViewModel.navigateTo("expenseRecords")
-            },
-            isDarkMode = isDarkMode,
-            onToggleDarkMode = onToggleDarkMode
+            }
         )
 
         "food" -> FoodScreen(
