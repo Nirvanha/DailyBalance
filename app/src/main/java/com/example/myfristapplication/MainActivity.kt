@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import dagger.hilt.android.AndroidEntryPoint
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
 
 import com.example.myfristapplication.viewmodel.FoodViewModel
 import com.example.myfristapplication.viewmodel.ExpenseViewModel
@@ -41,6 +43,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val isDark by themeViewModel.isDarkMode.collectAsState()
             ApplicationTheme(darkTheme = isDark) {
+                val systemUiController = rememberSystemUiController()
+                val backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background
+                SideEffect {
+                    systemUiController.setStatusBarColor(
+                        color = backgroundColor,
+                        darkIcons = !isDark
+                    )
+                }
                 MainApp(
                     mainViewModel = mainViewModel,
                     foodViewModel = foodViewModel,
