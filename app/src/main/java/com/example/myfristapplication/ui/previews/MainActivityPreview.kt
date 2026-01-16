@@ -2,6 +2,7 @@ package com.example.myfristapplication.ui.previews
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
@@ -28,7 +29,7 @@ import com.example.myfristapplication.ui.shared.MessageScreen
 @Composable
 fun PreviewMainApp() {
     _root_ide_package_.com.example.myfristapplication.ui.theme.ApplicationTheme {
-        Surface(modifier = Modifier.padding(0.dp), color = MaterialTheme.colorScheme.background) {
+        Surface(modifier = Modifier.fillMaxSize().padding(0.dp), color = MaterialTheme.colorScheme.background) {
             // simple local state to emulate MainViewModel + other viewmodels
             var currentScreen by remember { mutableStateOf("home") }
             var message by remember { mutableStateOf("") }

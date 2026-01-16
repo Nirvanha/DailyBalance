@@ -12,51 +12,51 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel principal que gestiona el estado y la lógica de la UI para acciones y gastos diarios.
+ */
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val actionRecordRepository: ActionRecordRepository,
     private val dailyExpenseRepository: DailyExpenseRepository
 ) : ViewModel() {
+    // Estado de la pantalla actual
     private val _currentScreen = MutableStateFlow("home")
     val currentScreen: StateFlow<String> = _currentScreen
 
+    // Mensaje para la UI
     private val _message = MutableStateFlow("")
     val message: StateFlow<String> = _message
 
+    // Registros de acciones
     private val _records = MutableStateFlow<List<ActionRecord>>(emptyList())
     val records: StateFlow<List<ActionRecord>> = _records
 
-    private val _foodDescription = MutableStateFlow("")
-    val foodDescription: StateFlow<String> = _foodDescription
+    // Descripción de comida (campo de entrada)
+    val foodDescription = MutableStateFlow("")
 
-    private val _dailyExpenseAmountText = MutableStateFlow("")
-    val dailyExpenseAmountText: StateFlow<String> = _dailyExpenseAmountText
+    // Campos para gastos diarios
+    val dailyExpenseAmountText = MutableStateFlow("")
+    val dailyExpenseCategory = MutableStateFlow("")
+    val dailyExpenseOrigin = MutableStateFlow("")
 
-    private val _dailyExpenseCategory = MutableStateFlow("")
-    val dailyExpenseCategory: StateFlow<String> = _dailyExpenseCategory
-
-    private val _dailyExpenseOrigin = MutableStateFlow("")
-    val dailyExpenseOrigin: StateFlow<String> = _dailyExpenseOrigin
-
+    // Validación y errores
     private val _isAmountValid = MutableStateFlow(true)
     val isAmountValid: StateFlow<Boolean> = _isAmountValid
-
     private val _showExpenseError = MutableStateFlow(false)
     val showExpenseError: StateFlow<Boolean> = _showExpenseError
 
-    // Añadimos el StateFlow para los registros de gastos diarios
+    // Registros de gastos diarios
     private val _expenseRecords = MutableStateFlow<List<DailyExpense>>(emptyList())
     val expenseRecords: StateFlow<List<DailyExpense>> = _expenseRecords
 
-    // Evento para exportar gastos
+    // Eventos de exportación
     private val _exportExpensesEvent = MutableStateFlow(false)
     val exportExpensesEvent: StateFlow<Boolean> = _exportExpensesEvent
-
-    // Evento para exportar registros
     private val _exportRecordsEvent = MutableStateFlow(false)
     val exportRecordsEvent: StateFlow<Boolean> = _exportRecordsEvent
 
-    // Función para solicitar los gastos desde el repositorio
+    // Solicita los gastos diarios al repositorio
     fun requestExpenseRecords() {
         viewModelScope.launch {
             _expenseRecords.value = dailyExpenseRepository.getAll()
@@ -71,27 +71,25 @@ class MainViewModel @Inject constructor(
         _message.value = msg
     }
 
-    fun setFoodDescription(desc: String) {
-        _foodDescription.value = desc
-    }
-
+    // Validación y seteo de campos de gasto diario
     fun setDailyExpenseAmountText(text: String) {
-        _dailyExpenseAmountText.value = text
+        dailyExpenseAmountText.value = text
         val parsed = text.toDoubleOrNull()
         _isAmountValid.value = parsed != null && parsed > 0.0
         _showExpenseError.value = false
     }
 
     fun setDailyExpenseCategory(cat: String) {
-        _dailyExpenseCategory.value = cat
+        dailyExpenseCategory.value = cat
         _showExpenseError.value = false
     }
 
     fun setDailyExpenseOrigin(origin: String) {
-        _dailyExpenseOrigin.value = origin
+        dailyExpenseOrigin.value = origin
         _showExpenseError.value = false
     }
 
+    // Registra una acción
     fun registerAction(type: String, description: String?) {
         val record = ActionRecord(
             type = type,
@@ -103,12 +101,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // Solicita los registros de acciones
     fun requestRecords() {
         viewModelScope.launch {
             _records.value = actionRecordRepository.getAll()
         }
     }
 
+    // Elimina todos los registros de acciones
     fun deleteAllRecords() {
         viewModelScope.launch {
             actionRecordRepository.deleteAll()
@@ -116,54 +116,44 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // Registra un gasto diario validando los campos
     fun registerExpense() {
-        val amount = _dailyExpenseAmountText.value.toDoubleOrNull() ?: 0.0
-        if (_isAmountValid.value && _dailyExpenseCategory.value.isNotBlank() && _dailyExpenseOrigin.value.isNotBlank()) {
+        val amount = dailyExpenseAmountText.value.toDoubleOrNull() ?: 0.0
+        if (_isAmountValid.value && dailyExpenseCategory.value.isNotBlank() && dailyExpenseOrigin.value.isNotBlank()) {
             val expense = DailyExpense(
                 amount = amount,
-                category = _dailyExpenseCategory.value,
+                category = dailyExpenseCategory.value,
                 date = System.currentTimeMillis(),
                 note = null,
-                origin = _dailyExpenseOrigin.value
+                origin = dailyExpenseOrigin.value
             )
             viewModelScope.launch {
                 dailyExpenseRepository.insert(expense)
             }
             _message.value = "Gasto diario registrado!"
-            _dailyExpenseAmountText.value = ""
-            _dailyExpenseCategory.value = ""
-            _dailyExpenseOrigin.value = ""
-            _showExpenseError.value = false
+            resetDailyExpenseFields()
             _currentScreen.value = "message"
         } else {
             _showExpenseError.value = true
         }
     }
 
+    // Limpia los campos de gasto diario
     fun resetDailyExpenseFields() {
-        _dailyExpenseAmountText.value = ""
-        _dailyExpenseCategory.value = ""
-        _dailyExpenseOrigin.value = ""
+        dailyExpenseAmountText.value = ""
+        dailyExpenseCategory.value = ""
+        dailyExpenseOrigin.value = ""
         _showExpenseError.value = false
     }
 
+    // Limpia el campo de descripción de comida
     fun resetFoodFields() {
-        _foodDescription.value = ""
+        foodDescription.value = ""
     }
 
-    fun exportExpensesRequested() {
-        _exportExpensesEvent.value = true
-    }
-
-    fun exportExpensesHandled() {
-        _exportExpensesEvent.value = false
-    }
-
-    fun exportRecordsRequested() {
-        _exportRecordsEvent.value = true
-    }
-
-    fun exportRecordsHandled() {
-        _exportRecordsEvent.value = false
-    }
+    // Eventos de exportación
+    fun exportExpensesRequested() { _exportExpensesEvent.value = true }
+    fun exportExpensesHandled() { _exportExpensesEvent.value = false }
+    fun exportRecordsRequested() { _exportRecordsEvent.value = true }
+    fun exportRecordsHandled() { _exportRecordsEvent.value = false }
 }
