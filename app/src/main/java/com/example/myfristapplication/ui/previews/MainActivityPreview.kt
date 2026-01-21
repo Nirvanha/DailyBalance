@@ -2,6 +2,7 @@ package com.example.myfristapplication.ui.previews
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
@@ -27,8 +28,8 @@ import com.example.myfristapplication.ui.shared.MessageScreen
 // Preview that reproduces MainApp navigation using simple local state and sample data.
 @Composable
 fun PreviewMainApp() {
-    _root_ide_package_.com.example.myfristapplication.ui.theme.MyFristApplicationTheme {
-        Surface(modifier = Modifier.padding(0.dp), color = MaterialTheme.colorScheme.background) {
+    _root_ide_package_.com.example.myfristapplication.ui.theme.ApplicationTheme {
+        Surface(modifier = Modifier.fillMaxSize().padding(0.dp), color = MaterialTheme.colorScheme.background) {
             // simple local state to emulate MainViewModel + other viewmodels
             var currentScreen by remember { mutableStateOf("home") }
             var message by remember { mutableStateOf("") }
@@ -136,7 +137,8 @@ fun PreviewMainApp() {
                         origin = ""
                         showExpenseError = false
                         currentScreen = "home"
-                    }
+                    },
+                    categoryOptions = listOf("Comida", "Transporte", "Ocio", "Otros")
                 )
 
                 "message" -> MessageScreen(
@@ -146,12 +148,14 @@ fun PreviewMainApp() {
 
                 "records" -> RecordsScreen(
                     records = sampleRecords,
-                    onBackClick = { currentScreen = "home" }
+                    onBackClick = { currentScreen = "home" },
+                    onExportClick = { currentScreen = "home" }
                 )
 
                 "expenseRecords" -> ExpenseRecordsScreen(
                     expenseRecords = sampleExpenses,
-                    onBackClick = { currentScreen = "home" }
+                    onBackClick = { currentScreen = "home" },
+                    onExportClick = { currentScreen = "home" }
                 )
             }
 

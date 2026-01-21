@@ -38,4 +38,15 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
             actionRecordRepository.insert(record)
         }
     }
+
+    fun exportRecordsToCsv(records: List<ActionRecord>): String {
+        val header = "Tipo,Fecha,Descripción"
+        val dateFormat = java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss", java.util.Locale.getDefault())
+        val rows = records.map { record ->
+            val formattedDate = dateFormat.format(java.util.Date(record.timestamp))
+            val desc = record.description?.replace(",", " ") ?: ""
+            "${record.type},$formattedDate,$desc"
+        }
+        return (listOf(header) + rows).joinToString("\n")
+    }
 }

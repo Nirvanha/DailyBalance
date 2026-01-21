@@ -17,7 +17,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun RecordsScreen(records: List<ActionRecord>, onBackClick: () -> Unit) {
+fun RecordsScreen(records: List<ActionRecord>, onBackClick: () -> Unit, onExportClick: () -> Unit) {
     val dateFormat = remember { SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()) }
     Column(
         modifier = Modifier
@@ -39,8 +39,12 @@ fun RecordsScreen(records: List<ActionRecord>, onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
-        Button(onClick = onBackClick) {
-            Text("Back")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(onClick = onBackClick) { Text("Back") }
+            Button(onClick = onExportClick) { Text("Exportar registros") }
         }
     }
 }

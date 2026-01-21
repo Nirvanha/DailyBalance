@@ -1,20 +1,27 @@
 package com.example.myfristapplication
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import com.example.myfristapplication.ui.theme.MyFristApplicationTheme
+import com.example.myfristapplication.ui.theme.ApplicationTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import dagger.hilt.android.AndroidEntryPoint
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 
 import com.example.myfristapplication.viewmodel.FoodViewModel
 import com.example.myfristapplication.viewmodel.ExpenseViewModel
 import com.example.myfristapplication.viewmodel.RecordsViewModel
 import com.example.myfristapplication.viewmodel.ExpenseRecordsViewModel
+import com.example.myfristapplication.viewmodel.ThemeViewModel
 
 import com.example.myfristapplication.ui.home.HomeScreen
 import com.example.myfristapplication.ui.food.FoodScreen
@@ -28,16 +35,65 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ViewModels are provided by Hilt
+        // ViewModels are provided by Hilt (ThemeViewModel is AndroidViewModel created by ViewModelProvider)
         val mainViewModel: MainViewModel by viewModels()
         val foodViewModel: FoodViewModel by viewModels()
         val recordsViewModel: RecordsViewModel by viewModels()
         val expenseViewModel: ExpenseViewModel by viewModels()
         val expenseRecordsViewModel: ExpenseRecordsViewModel by viewModels()
+        val themeViewModel: ThemeViewModel by viewModels()
+
+        // Launcher para SAF
+        var exportExpensesUri: Uri? = null
+        val exportExpensesLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri: Uri? ->
+            if (uri != null) {
+                val expenses = expenseRecordsViewModel.expenseRecords.value
+                val csv = expenseRecordsViewModel.exportExpensesToCsv(expenses)
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(csv.toByteArray())
+                }
+            }
+            mainViewModel.exportExpensesHandled()
+        }
+
+        // Launcher para exportar registros
+        val exportRecordsLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri: Uri? ->
+            if (uri != null) {
+                val records = recordsViewModel.records.value
+                val csv = recordsViewModel.exportRecordsToCsv(records)
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(csv.toByteArray())
+                }
+            }
+            mainViewModel.exportRecordsHandled()
+        }
 
         enableEdgeToEdge()
         setContent {
-            MyFristApplicationTheme {
+            val isDark by themeViewModel.isDarkMode.collectAsState()
+            val exportExpensesEvent by mainViewModel.exportExpensesEvent.collectAsState()
+            val exportRecordsEvent by mainViewModel.exportRecordsEvent.collectAsState()
+            ApplicationTheme(darkTheme = isDark) {
+                val systemUiController = rememberSystemUiController()
+                val backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background
+                SideEffect {
+                    systemUiController.setStatusBarColor(
+                        color = backgroundColor,
+                        darkIcons = !isDark
+                    )
+                }
+                // Lanzar SAF cuando se solicite exportar
+                LaunchedEffect(exportExpensesEvent) {
+                    if (exportExpensesEvent) {
+                        exportExpensesLauncher.launch("gastos.csv")
+                    }
+                }
+                // Lanzar SAF cuando se solicite exportar registros
+                LaunchedEffect(exportRecordsEvent) {
+                    if (exportRecordsEvent) {
+                        exportRecordsLauncher.launch("registros.csv")
+                    }
+                }
                 MainApp(
                     mainViewModel = mainViewModel,
                     foodViewModel = foodViewModel,
@@ -56,7 +112,7 @@ fun MainApp(
     foodViewModel: FoodViewModel,
     expenseViewModel: ExpenseViewModel,
     recordsViewModel: RecordsViewModel,
-    expenseRecordsViewModel: ExpenseRecordsViewModel
+    expenseRecordsViewModel: ExpenseRecordsViewModel,
 ) {
     val currentScreen by mainViewModel.currentScreen.collectAsState()
     val message by mainViewModel.message.collectAsState()
@@ -119,6 +175,7 @@ fun MainApp(
             onRegisterExpenseClick = {
                 val ok = expenseViewModel.registerExpense()
                 if (ok) {
+                    expenseViewModel.reloadCategories() // Recargar categorías tras registrar
                     mainViewModel.setMessage("Gasto diario registrado!")
                     mainViewModel.navigateTo("message")
                 }
@@ -126,7 +183,8 @@ fun MainApp(
             onBackClick = {
                 expenseViewModel.resetFields()
                 mainViewModel.navigateTo("home")
-            }
+            },
+            categoryOptions = expenseViewModel.categoryOptions.collectAsState().value
         )
 
         "message" -> MessageScreen(
@@ -136,12 +194,18 @@ fun MainApp(
 
         "records" -> RecordsScreen(
             records = recordsViewModel.records.collectAsState().value,
-            onBackClick = { mainViewModel.navigateTo("home") }
+            onBackClick = { mainViewModel.navigateTo("home") },
+            onExportClick = {
+                mainViewModel.exportRecordsRequested()
+            }
         )
 
         "expenseRecords" -> ExpenseRecordsScreen(
             expenseRecords = expenseRecordsViewModel.expenseRecords.collectAsState().value,
-            onBackClick = { mainViewModel.navigateTo("home") }
+            onBackClick = { mainViewModel.navigateTo("home") },
+            onExportClick = {
+                mainViewModel.exportExpensesRequested()
+            }
         )
     }
 }
