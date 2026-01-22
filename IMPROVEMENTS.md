@@ -1,6 +1,6 @@
-# 📊 Guía de Mejoras - Daily Balance
+# 📊 Guía de Mejoras - DailyBalance
 
-Este documento contiene un análisis completo de las mejoras y refactorizaciones recomendadas para el proyecto Daily Balance. Úsalo como referencia para futuras iteraciones de desarrollo.
+Este documento contiene un análisis completo de las mejoras y refactorizaciones recomendadas para el proyecto DailyBalance. Úsalo como referencia para futuras iteraciones de desarrollo.
 
 ---
 
@@ -1258,10 +1258,18 @@ class ExpenseViewModel @Inject constructor(
     - Tests de navegación
     - Tiempo estimado: 2-3 días
 
-13. ✅ **Agregar logging con Timber**
+13. ✅ **Agregar Timber logging**
     - Configurar Timber
     - Agregar logs en puntos clave
     - Tiempo estimado: 1 día
+
+14. ✅ **Mejorar double-check locking en AppDatabase**
+    - Aplicar patrón correcto
+    - Tiempo estimado: 0.5 días
+
+15. ✅ **Usar collectAsStateWithLifecycle**
+    - Refactorizar MainActivity
+    - Tiempo estimado: 0.5 días
 
 **Total Fase 3:** 9-12 días
 
@@ -1271,22 +1279,22 @@ class ExpenseViewModel @Inject constructor(
 
 **Prioridad:** ⚪ Baja
 
-14. ✅ **Renombrar paquete**
+16. ✅ **Renombrar paquete**
     - Refactorizar estructura
     - Actualizar configuraciones
     - Tiempo estimado: 0.5 días
 
-15. ✅ **Agregar encriptación**
+17. ✅ **Agregar encriptación**
     - Implementar SQLCipher
     - Configurar Android Keystore
     - Tiempo estimado: 2 días
 
-16. ✅ **Migrar de SystemUiController**
+18. ✅ **Migrar de SystemUiController**
     - Usar WindowCompat
     - Eliminar dependencia Accompanist
     - Tiempo estimado: 0.5 días
 
-17. ✅ **Agregar documentación de código**
+19. ✅ **Agregar documentación de código**
     - KDoc para clases públicas
     - Comentarios en lógica compleja
     - Tiempo estimado: 1-2 días

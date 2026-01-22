@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myfristapplication"
+    namespace = "com.dailybalance.app"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.myfristapplication"
+        applicationId = "com.dailybalance.app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

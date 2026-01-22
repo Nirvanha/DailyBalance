@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MyFristApplication"
+rootProject.name = "DailyBalance"
 include(":app")
  

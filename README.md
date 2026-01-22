@@ -1,4 +1,4 @@
-# 📊 Daily Balance
+# 📊 DailyBalance
 
 Aplicación Android para gestión de gastos diarios y seguimiento de hábitos, construida con las últimas tecnologías de desarrollo Android.
 
