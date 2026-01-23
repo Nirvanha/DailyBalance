@@ -24,10 +24,6 @@ class MainViewModel @Inject constructor(
     private val _currentScreen = MutableStateFlow("home")
     val currentScreen: StateFlow<String> = _currentScreen
 
-    // Mensaje para la UI
-    private val _message = MutableStateFlow("")
-    val message: StateFlow<String> = _message
-
     // Registros de acciones
     private val _records = MutableStateFlow<List<ActionRecord>>(emptyList())
     val records: StateFlow<List<ActionRecord>> = _records
@@ -65,10 +61,6 @@ class MainViewModel @Inject constructor(
 
     fun navigateTo(screen: String) {
         _currentScreen.value = screen
-    }
-
-    fun setMessage(msg: String) {
-        _message.value = msg
     }
 
     // Validación y seteo de campos de gasto diario
@@ -130,9 +122,9 @@ class MainViewModel @Inject constructor(
             viewModelScope.launch {
                 dailyExpenseRepository.insert(expense)
             }
-            _message.value = "Gasto diario registrado!"
             resetDailyExpenseFields()
-            _currentScreen.value = "message"
+            // Volvemos a home (sin pantalla de mensaje)
+            _currentScreen.value = "home"
         } else {
             _showExpenseError.value = true
         }

@@ -17,7 +17,6 @@ import com.dailybalance.app.ui.food.FoodScreen
 import com.dailybalance.app.ui.expense.DailyExpenseScreen
 import com.dailybalance.app.ui.records.RecordsScreen
 import com.dailybalance.app.ui.records.ExpenseRecordsScreen
-import com.dailybalance.app.ui.shared.MessageScreen
 import dagger.hilt.android.AndroidEntryPoint
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.SideEffect
@@ -41,7 +40,6 @@ class MainActivity : ComponentActivity() {
         val themeViewModel: ThemeViewModel by viewModels()
 
         // Launcher para SAF
-        var exportExpensesUri: Uri? = null
         val exportExpensesLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri: Uri? ->
             if (uri != null) {
                 val expenses = expenseRecordsViewModel.expenseRecords.value
@@ -112,26 +110,23 @@ fun MainApp(
     expenseRecordsViewModel: ExpenseRecordsViewModel,
 ) {
     val currentScreen by mainViewModel.currentScreen.collectAsState()
-    val message by mainViewModel.message.collectAsState()
 
     // Cuando volvemos a home, refrescamos el último cigarro desde BD.
     LaunchedEffect(currentScreen) {
         if (currentScreen == "home") {
-            recordsViewModel.refreshLastCigarette()
+            recordsViewModel.refreshHomeStats()
         }
     }
 
     when (currentScreen) {
         "home" -> HomeScreen(
             lastCigaretteTimestamp = recordsViewModel.lastCigaretteTimestamp.collectAsState().value,
+            todayCigarettesCount = recordsViewModel.todayCigarettesCount.collectAsState().value,
+            todayBeersCount = recordsViewModel.todayBeersCount.collectAsState().value,
             onCigaretteClick = {
-                mainViewModel.setMessage("You smoked a cigarette!")
-                mainViewModel.navigateTo("message")
                 recordsViewModel.registerAction("cigarette", null)
             },
             onBeerClick = {
-                mainViewModel.setMessage("You drank a beer!")
-                mainViewModel.navigateTo("message")
                 recordsViewModel.registerAction("beer", null)
             },
             onFoodClick = {
@@ -158,9 +153,8 @@ fun MainApp(
             onDescriptionChange = { foodViewModel.setDescription(it) },
             onRegistrarClick = {
                 foodViewModel.registerFood()
-                mainViewModel.setMessage("You register food!")
                 foodViewModel.reset()
-                mainViewModel.navigateTo("message")
+                mainViewModel.navigateTo("home")
             },
             onBackClick = {
                 foodViewModel.reset()
@@ -181,8 +175,8 @@ fun MainApp(
                 val ok = expenseViewModel.registerExpense()
                 if (ok) {
                     expenseViewModel.reloadCategories() // Recargar categorías tras registrar
-                    mainViewModel.setMessage("Gasto diario registrado!")
-                    mainViewModel.navigateTo("message")
+                    // Volvemos a home (sin pantalla de mensaje)
+                    mainViewModel.navigateTo("home")
                 }
             },
             onBackClick = {
@@ -190,11 +184,6 @@ fun MainApp(
                 mainViewModel.navigateTo("home")
             },
             categoryOptions = expenseViewModel.categoryOptions.collectAsState().value
-        )
-
-        "message" -> MessageScreen(
-            message = message,
-            onBackClick = { mainViewModel.navigateTo("home") }
         )
 
         "records" -> RecordsScreen(

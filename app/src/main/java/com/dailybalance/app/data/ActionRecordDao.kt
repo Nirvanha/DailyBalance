@@ -15,6 +15,9 @@ interface ActionRecordDao {
     @Query("SELECT timestamp FROM action_record WHERE type = :type ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLastTimestampByType(type: String): Long?
 
+    @Query("SELECT COUNT(*) FROM action_record WHERE type = :type AND timestamp BETWEEN :fromTimestamp AND :toTimestamp")
+    suspend fun countByTypeBetween(type: String, fromTimestamp: Long, toTimestamp: Long): Int
+
     @Query("DELETE FROM action_record")
     suspend fun deleteAll()
 }

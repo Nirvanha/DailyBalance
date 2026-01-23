@@ -1,8 +1,11 @@
 package com.dailybalance.app.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -14,15 +17,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dailybalance.app.R
+import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlin.math.max
 
 @Composable
 fun HomeScreen(
     lastCigaretteTimestamp: Long?,
+    todayCigarettesCount: Int,
+    todayBeersCount: Int,
     onCigaretteClick: () -> Unit,
     onBeerClick: () -> Unit,
     onFoodClick: () -> Unit,
@@ -32,23 +40,30 @@ fun HomeScreen(
     onViewExpensesClick: () -> Unit
 ) {
     var bannerText by remember(lastCigaretteTimestamp) { mutableStateOf<String?>(null) }
+    var elapsedMs by remember(lastCigaretteTimestamp) { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(lastCigaretteTimestamp) {
         if (lastCigaretteTimestamp == null) {
             bannerText = null
+            elapsedMs = null
             return@LaunchedEffect
         }
 
-        fun compute(): String {
+        fun computeElapsed(): Long {
             val now = System.currentTimeMillis()
-            val elapsedMs = max(0L, now - lastCigaretteTimestamp)
-            return "Last cigarette ${formatElapsed(elapsedMs)}"
+            return max(0L, now - lastCigaretteTimestamp)
         }
 
-        bannerText = compute()
+        fun recompute() {
+            val e = computeElapsed()
+            elapsedMs = e
+            bannerText = formatElapsed(e)
+        }
+
+        recompute()
         while (true) {
             delay(30_000L)
-            bannerText = compute()
+            recompute()
         }
     }
 
@@ -59,21 +74,23 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        if (bannerText != null) {
-            Surface(
+        val localElapsedMs = elapsedMs
+        if (bannerText != null && localElapsedMs != null) {
+            MotivationalSmokeFreeBanner(
+                elapsedLabel = bannerText!!,
+                elapsedMs = localElapsedMs,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = bannerText!!,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
+                    .padding(bottom = 10.dp)
+            )
+
+            TodayCountersRow(
+                cigarettes = todayCigarettesCount,
+                beers = todayBeersCount,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 14.dp)
+            )
         }
 
         Row(
@@ -137,6 +154,122 @@ fun HomeScreen(
     }
 }
 
+@Composable
+private fun TodayCountersRow(
+    cigarettes: Int,
+    beers: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        StatChip(
+            label = "Cigarettes today",
+            value = cigarettes,
+            modifier = Modifier.weight(1f)
+        )
+        StatChip(
+            label = "Beers today",
+            value = beers,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun StatChip(
+    label: String,
+    value: Int,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        shape = MaterialTheme.shapes.large,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun MotivationalSmokeFreeBanner(
+    elapsedLabel: String,
+    elapsedMs: Long,
+    modifier: Modifier = Modifier,
+) {
+    val thresholdMs = 90L * 60L * 1000L // 1h30m
+    val isBelowThreshold = elapsedMs < thresholdMs
+
+    val positiveBackground = MaterialTheme.colorScheme.primaryContainer
+    val positiveContent = MaterialTheme.colorScheme.onPrimaryContainer
+
+    // Rojo MÁS intenso.
+    val warningBackground = MaterialTheme.colorScheme.error
+    val warningContent = MaterialTheme.colorScheme.onError
+
+    val backgroundColor = if (isBelowThreshold) warningBackground else positiveBackground
+    val contentColor = if (isBelowThreshold) warningContent else positiveContent
+
+    val elevation = if (isBelowThreshold) 14.dp else 10.dp
+    val borderColor = if (isBelowThreshold) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.outlineVariant
+    val borderWidth = if (isBelowThreshold) 2.dp else 1.dp
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 520.dp)
+                .shadow(elevation = elevation, shape = MaterialTheme.shapes.large)
+                .fillMaxWidth(),
+            color = backgroundColor,
+            contentColor = contentColor,
+            shape = MaterialTheme.shapes.large,
+            tonalElevation = 0.dp,
+            border = BorderStroke(borderWidth, borderColor)
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Smoke-free: $elapsedLabel",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = if (isBelowThreshold) {
+                        "First 90 minutes are the hardest. Stay strong."
+                    } else {
+                        "You're doing it. One decision at a time."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor.copy(alpha = 0.92f)
+                )
+            }
+        }
+    }
+}
+
 private fun formatElapsed(elapsedMs: Long): String {
     val totalMinutes = elapsedMs / 60_000L
     val days = totalMinutes / (60L * 24L)
@@ -146,6 +279,6 @@ private fun formatElapsed(elapsedMs: Long): String {
     } else {
         val hours = totalMinutes / 60L
         val minutes = totalMinutes % 60L
-        String.format("%02d:%02d", hours, minutes)
+        String.format(Locale.getDefault(), "%02d:%02d", hours, minutes)
     }
 }

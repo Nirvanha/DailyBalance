@@ -9,6 +9,8 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 roomKtx = "2.8.2"
 hilt = "2.57.2"
+coroutinesTest = "1.9.0"
+archCoreTesting = "2.2.0"
 
 # Compose-related versions (added)
 activityCompose = "1.8.0"
@@ -41,4 +43,3 @@ com-google-dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", 
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-

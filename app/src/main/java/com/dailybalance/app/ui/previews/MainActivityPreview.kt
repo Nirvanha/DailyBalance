@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dailybalance.app.data.ActionRecord
@@ -23,7 +22,6 @@ import com.dailybalance.app.ui.food.FoodScreen
 import com.dailybalance.app.ui.home.HomeScreen
 import com.dailybalance.app.ui.records.ExpenseRecordsScreen
 import com.dailybalance.app.ui.records.RecordsScreen
-import com.dailybalance.app.ui.shared.MessageScreen
 
 // Preview that reproduces MainApp navigation using simple local state and sample data.
 @Composable
@@ -76,13 +74,13 @@ fun PreviewMainApp() {
             when (currentScreen) {
                 "home" -> HomeScreen(
                     lastCigaretteTimestamp = sampleRecords.firstOrNull { it.type == "cigarette" }?.timestamp,
+                    todayCigarettesCount = 3,
+                    todayBeersCount = 1,
                     onCigaretteClick = {
-                        message = "You smoked a cigarette!"
-                        currentScreen = "message"
+                        // Simula registrar y quedarse en home
                     },
                     onBeerClick = {
-                        message = "You drank a beer!"
-                        currentScreen = "message"
+                        // Simula registrar y quedarse en home
                     },
                     onFoodClick = { currentScreen = "food" },
                     onViewRecordsClick = { currentScreen = "records" },
@@ -95,9 +93,9 @@ fun PreviewMainApp() {
                     description = foodDescription,
                     onDescriptionChange = { foodDescription = it },
                     onRegistrarClick = {
-                        message = "You register food!"
+                        // simula registrar y volver a home
                         foodDescription = ""
-                        currentScreen = "message"
+                        currentScreen = "home"
                     },
                     onBackClick = {
                         foodDescription = ""
@@ -122,12 +120,11 @@ fun PreviewMainApp() {
                     onRegisterExpenseClick = {
                         val ok = isAmountValid && category.isNotBlank() && origin.isNotBlank()
                         if (ok) {
-                            message = "Gasto diario registrado!"
                             amountText = ""
                             category = ""
                             origin = ""
                             showExpenseError = false
-                            currentScreen = "message"
+                            currentScreen = "home"
                         } else {
                             showExpenseError = true
                         }
@@ -140,11 +137,6 @@ fun PreviewMainApp() {
                         currentScreen = "home"
                     },
                     categoryOptions = listOf("Comida", "Transporte", "Ocio", "Otros")
-                )
-
-                "message" -> MessageScreen(
-                    message = message,
-                    onBackClick = { currentScreen = "home" }
                 )
 
                 "records" -> RecordsScreen(

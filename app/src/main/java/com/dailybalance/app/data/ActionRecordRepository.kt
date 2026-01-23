@@ -16,6 +16,10 @@ class ActionRecordRepository(private val dao: ActionRecordDao) {
         dao.getLastTimestampByType(type)
     }
 
+    suspend fun countByTypeBetween(type: String, fromTimestamp: Long, toTimestamp: Long): Int = withContext(Dispatchers.IO) {
+        dao.countByTypeBetween(type, fromTimestamp, toTimestamp)
+    }
+
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
         dao.deleteAll()
     }
