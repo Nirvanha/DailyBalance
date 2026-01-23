@@ -114,8 +114,16 @@ fun MainApp(
     val currentScreen by mainViewModel.currentScreen.collectAsState()
     val message by mainViewModel.message.collectAsState()
 
+    // Cuando volvemos a home, refrescamos el último cigarro desde BD.
+    LaunchedEffect(currentScreen) {
+        if (currentScreen == "home") {
+            recordsViewModel.refreshLastCigarette()
+        }
+    }
+
     when (currentScreen) {
         "home" -> HomeScreen(
+            lastCigaretteTimestamp = recordsViewModel.lastCigaretteTimestamp.collectAsState().value,
             onCigaretteClick = {
                 mainViewModel.setMessage("You smoked a cigarette!")
                 mainViewModel.navigateTo("message")

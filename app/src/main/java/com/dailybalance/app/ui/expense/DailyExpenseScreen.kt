@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
+import androidx.compose.material3.MenuAnchorType
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,24 +64,49 @@ fun DailyExpenseScreen(
         }
         Spacer(modifier = Modifier.height(16.dp))
         var categoryExpanded by remember { mutableStateOf(false) }
+
+        // Normalizamos opciones (sin duplicados, y con 1ª letra en mayúscula)
+        val normalizedCategoryOptions = remember(categoryOptions) {
+            categoryOptions
+                .map { it.trim().replaceFirstChar { c -> c.titlecase(Locale.getDefault()) } }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .sorted()
+        }
+
+        // Filtrado en tiempo real por lo que el usuario escriba
+        val filteredCategoryOptions = remember(category, normalizedCategoryOptions) {
+            val query = category.trim()
+            if (query.isBlank()) {
+                normalizedCategoryOptions
+            } else {
+                normalizedCategoryOptions.filter { it.contains(query, ignoreCase = true) }
+            }
+        }
+
         ExposedDropdownMenuBox(
             expanded = categoryExpanded,
-            onExpandedChange = { categoryExpanded = !categoryExpanded },
+            onExpandedChange = { shouldExpand -> categoryExpanded = shouldExpand },
             modifier = Modifier.fillMaxWidth()
         ) {
             OutlinedTextField(
                 value = category,
-                onValueChange = onCategoryChange, // Permite entrada manual
+                onValueChange = { input ->
+                    val trimmed = input.trimStart() // deja escribir pero evita espacios al inicio
+                    onCategoryChange(trimmed)
+                    // Mientras escribes, mantenemos abierto para ver sugerencias (pero no tocamos el foco)
+                    categoryExpanded = true
+                },
                 label = { Text("Categoría") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(type = MenuAnchorType.PrimaryEditable).fillMaxWidth(),
                 singleLine = true
             )
             ExposedDropdownMenu(
                 expanded = categoryExpanded,
                 onDismissRequest = { categoryExpanded = false }
             ) {
-                categoryOptions.distinct().forEach { option ->
+                filteredCategoryOptions.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
@@ -92,7 +119,7 @@ fun DailyExpenseScreen(
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        val originOptions = listOf("Nomina", "NoCuenta", "Credito", "Eci")
+        val originOptions = listOf("Nomina", "NoCuenta", "Credito", "Eci", "Efectivo")
         var expanded by remember { mutableStateOf(false) }
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -105,7 +132,7 @@ fun DailyExpenseScreen(
                 readOnly = true,
                 label = { Text("Origen") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier.menuAnchor(type = MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -125,9 +152,17 @@ fun DailyExpenseScreen(
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = onRegisterExpenseClick,
+            onClick = {
+                // Antes de registrar, forzamos formato: primera letra en mayúscula
+                val normalized = category.trim().replaceFirstChar { c -> c.titlecase(Locale.getDefault()) }
+                if (normalized != category) {
+                    onCategoryChange(normalized)
+                }
+                onRegisterExpenseClick()
+            },
             enabled = isAmountValid && category.isNotBlank() && origin.isNotBlank(),
-            modifier = Modifier.fillMaxWidth()) {
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Registrar gasto")
         }
         if (showExpenseError) {

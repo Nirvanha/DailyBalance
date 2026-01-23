@@ -155,7 +155,7 @@ cd DailyBalance
 app/
 ├── src/
 │   ├── main/
-│   │   ├── java/com/example/myfristapplication/
+│   │   ├── java/com/dailybalance/app/
 │   │   │   ├── data/                      # Capa de datos
 │   │   │   │   ├── ActionRecord.kt        # Entity: Registros de acciones
 │   │   │   │   ├── ActionRecordDao.kt     # DAO para ActionRecord
@@ -191,7 +191,7 @@ app/
 │   ├── test/                              # Tests unitarios
 │   └── androidTest/                       # Tests instrumentados
 ├── schemas/                               # Room database schemas
-│   └── com.example.myfristapplication.data.AppDatabase/
+│   └── com.dailybalance.app.data.AppDatabase/
 │       ├── 1.json                         # Schema v1
 │       ├── 2.json                         # Schema v2
 │       └── 3.json                         # Schema v3 (actual)

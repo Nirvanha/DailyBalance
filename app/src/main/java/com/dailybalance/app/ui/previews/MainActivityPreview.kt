@@ -75,6 +75,7 @@ fun PreviewMainApp() {
 
             when (currentScreen) {
                 "home" -> HomeScreen(
+                    lastCigaretteTimestamp = sampleRecords.firstOrNull { it.type == "cigarette" }?.timestamp,
                     onCigaretteClick = {
                         message = "You smoked a cigarette!"
                         currentScreen = "message"
@@ -165,8 +166,6 @@ fun PreviewMainApp() {
 }
 
 @Preview(name = "Main Preview - Light", uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true)
-@Preview(name = "Main Preview - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
-@Preview(device = Devices.PIXEL_7A, showBackground = true)
 @Composable
 fun PreviewMainApp_Defaults() {
     PreviewMainApp()

@@ -16,7 +16,6 @@ Este documento contiene un análisis completo de las mejoras y refactorizaciones
 
 ### ❌ Deuda Técnica
 
-- **Nombre del paquete con error tipográfico**: `MyFristApplication` (debería ser "First")
 - **0% de cobertura de tests** (solo templates por defecto)
 - **Casi todas las strings están hardcodeadas** en el código (59 instancias)
 - **Navegación custom sin type-safety** (basada en strings)
@@ -464,7 +463,7 @@ private fun ExpenseActionButtons(...) { /* implementación */ }
 
 **utils/DateFormatter.kt**
 ```kotlin
-package com.example.myfristapplication.utils
+package com.dailybalance.app.utils
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -493,7 +492,7 @@ object DateFormatter {
 
 **utils/CsvExporter.kt**
 ```kotlin
-package com.example.myfristapplication.utils
+package com.dailybalance.app.utils
 
 class CsvExporter<T> {
     fun export(
@@ -526,7 +525,7 @@ fun exportExpensesToCsv(expenses: List<DailyExpense>): String {
 
 **utils/AmountValidator.kt**
 ```kotlin
-package com.example.myfristapplication.utils
+package com.dailybalance.app.utils
 
 object AmountValidator {
     fun validate(text: String): ValidationResult {
@@ -566,7 +565,7 @@ fun onAmountChange(text: String) {
 
 **ui/common/UiState.kt**
 ```kotlin
-package com.example.myfristapplication.ui.common
+package com.dailybalance.app.ui.common
 
 sealed class UiState<out T> {
     object Idle : UiState<Nothing>()
@@ -1090,7 +1089,7 @@ object SecureKeystore {
 
 ### 19. Renombrar Paquete
 
-**Proceso para renombrar de `com.example.myfristapplication` a `com.dailybalance.app`:**
+**Proceso para renombrar de `com.dailybalance.app` a `com.dailybalance.app`:**
 
 1. **En Android Studio:**
    - Click derecho en el paquete base → Refactor → Rename
@@ -1124,7 +1123,7 @@ android {
 
 4. **Actualizar schemas de Room:**
    - Mover/renombrar carpeta en `app/schemas/`
-   - De: `com.example.myfristapplication.data.AppDatabase/`
+   - De: `com.dailybalance.app.data.AppDatabase/`
    - A: `com.dailybalance.app.data.AppDatabase/`
 
 5. **Sincronizar y limpiar:**
@@ -1353,7 +1352,6 @@ class ExpenseViewModel @Inject constructor(
 - [ ] Migrar de SystemUiController a WindowCompat
 
 #### ⚪ Baja Prioridad
-- [ ] Renombrar paquete (MyFristApplication → com.dailybalance.app)
 - [ ] Agregar encriptación (SQLCipher)
 - [ ] Documentación KDoc completa
 - [ ] Configurar ProGuard para release

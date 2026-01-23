@@ -12,8 +12,11 @@ class ActionRecordRepository(private val dao: ActionRecordDao) {
         dao.getAll()
     }
 
+    suspend fun getLastTimestampByType(type: String): Long? = withContext(Dispatchers.IO) {
+        dao.getLastTimestampByType(type)
+    }
+
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
         dao.deleteAll()
     }
 }
-

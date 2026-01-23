@@ -15,6 +15,20 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
     private val _records = MutableStateFlow<List<ActionRecord>>(emptyList())
     val records: StateFlow<List<ActionRecord>> = _records
 
+    private val _lastCigaretteTimestamp = MutableStateFlow<Long?>(null)
+    val lastCigaretteTimestamp: StateFlow<Long?> = _lastCigaretteTimestamp
+
+    init {
+        // Carga inicial para que Home pueda mostrar el banner si ya existe info.
+        refreshLastCigarette()
+    }
+
+    fun refreshLastCigarette() {
+        viewModelScope.launch {
+            _lastCigaretteTimestamp.value = actionRecordRepository.getLastTimestampByType("cigarette")
+        }
+    }
+
     fun requestRecords() {
         viewModelScope.launch {
             _records.value = actionRecordRepository.getAll()
@@ -25,6 +39,7 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
         viewModelScope.launch {
             actionRecordRepository.deleteAll()
             _records.value = emptyList()
+            _lastCigaretteTimestamp.value = null
         }
     }
 
@@ -36,6 +51,10 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
         )
         viewModelScope.launch {
             actionRecordRepository.insert(record)
+            if (type == "cigarette") {
+                // Actualiza inmediatamente el banner.
+                _lastCigaretteTimestamp.value = record.timestamp
+            }
         }
     }
 
