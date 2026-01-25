@@ -17,6 +17,7 @@ import com.dailybalance.app.ui.food.FoodScreen
 import com.dailybalance.app.ui.expense.DailyExpenseScreen
 import com.dailybalance.app.ui.records.RecordsScreen
 import com.dailybalance.app.ui.records.ExpenseRecordsScreen
+import com.dailybalance.app.ui.records.TodayRecordsScreen
 import dagger.hilt.android.AndroidEntryPoint
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.SideEffect
@@ -145,6 +146,14 @@ fun MainApp(
             onViewExpensesClick = {
                 expenseRecordsViewModel.requestExpenseRecords()
                 mainViewModel.navigateTo("expenseRecords")
+            },
+            onTodayCigarettesClick = {
+                recordsViewModel.requestTodayRecordsByType("cigarette")
+                mainViewModel.navigateTo("todayRecords/cigarette")
+            },
+            onTodayBeersClick = {
+                recordsViewModel.requestTodayRecordsByType("beer")
+                mainViewModel.navigateTo("todayRecords/beer")
             }
         )
 
@@ -191,7 +200,34 @@ fun MainApp(
             onBackClick = { mainViewModel.navigateTo("home") },
             onExportClick = {
                 mainViewModel.exportRecordsRequested()
+            },
+            onDeleteRecordConfirm = { record ->
+                recordsViewModel.deleteRecord(record)
             }
+        )
+
+        "todayRecords/cigarette" -> TodayRecordsScreen(
+            type = "cigarette",
+            records = recordsViewModel.todayTypeRecords.collectAsState().value,
+            onBackClick = { mainViewModel.navigateTo("home") },
+            onDeleteTodayClick = {
+                recordsViewModel.deleteTodayRecordsByType("cigarette")
+            },
+            onDeleteRecordConfirm = { record ->
+                recordsViewModel.deleteRecord(record)
+            },
+        )
+
+        "todayRecords/beer" -> TodayRecordsScreen(
+            type = "beer",
+            records = recordsViewModel.todayTypeRecords.collectAsState().value,
+            onBackClick = { mainViewModel.navigateTo("home") },
+            onDeleteTodayClick = {
+                recordsViewModel.deleteTodayRecordsByType("beer")
+            },
+            onDeleteRecordConfirm = { record ->
+                recordsViewModel.deleteRecord(record)
+            },
         )
 
         "expenseRecords" -> ExpenseRecordsScreen(
@@ -199,7 +235,11 @@ fun MainApp(
             onBackClick = { mainViewModel.navigateTo("home") },
             onExportClick = {
                 mainViewModel.exportExpensesRequested()
+            },
+            onDeleteExpenseConfirm = { expense ->
+                expenseRecordsViewModel.deleteExpense(expense)
             }
         )
+
     }
 }

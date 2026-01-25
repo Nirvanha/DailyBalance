@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,15 +22,20 @@ import com.dailybalance.app.ui.food.FoodScreen
 import com.dailybalance.app.ui.home.HomeScreen
 import com.dailybalance.app.ui.records.ExpenseRecordsScreen
 import com.dailybalance.app.ui.records.RecordsScreen
+import com.dailybalance.app.ui.records.TodayRecordsScreen
 
 // Preview that reproduces MainApp navigation using simple local state and sample data.
 @Composable
 fun PreviewMainApp() {
     _root_ide_package_.com.dailybalance.app.ui.theme.ApplicationTheme {
-        Surface(modifier = Modifier.fillMaxSize().padding(0.dp), color = MaterialTheme.colorScheme.background) {
-            // simple local state to emulate MainViewModel + other viewmodels
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(0.dp),
+            color = MaterialTheme.colorScheme.background
+        ) {
             var currentScreen by remember { mutableStateOf("home") }
-            var message by remember { mutableStateOf("") }
+            var todayType by remember { mutableStateOf<String?>(null) }
 
             var foodDescription by remember { mutableStateOf("") }
 
@@ -40,22 +45,15 @@ fun PreviewMainApp() {
             var isAmountValid by remember { mutableStateOf(true) }
             var showExpenseError by remember { mutableStateOf(false) }
 
-            // sample records
             val sampleRecords = listOf(
-                ActionRecord(
-                    type = "cigarette",
-                    timestamp = System.currentTimeMillis() - 1000L * 60 * 60,
-                    description = null
-                ),
-                ActionRecord(
-                    type = "comida",
-                    timestamp = System.currentTimeMillis() - 1000L * 60 * 30,
-                    description = "Ensalada"
-                )
+                ActionRecord(id = 1, type = "cigarette", timestamp = System.currentTimeMillis() - 1000L * 60 * 60, description = null),
+                ActionRecord(id = 2, type = "beer", timestamp = System.currentTimeMillis() - 1000L * 60 * 45, description = null),
+                ActionRecord(id = 3, type = "comida", timestamp = System.currentTimeMillis() - 1000L * 60 * 30, description = "Ensalada"),
             )
 
             val sampleExpenses = listOf(
                 DailyExpense(
+                    id = 1,
                     amount = 5.5,
                     category = "Comida",
                     date = System.currentTimeMillis() - 1000L * 60 * 60 * 24,
@@ -63,6 +61,7 @@ fun PreviewMainApp() {
                     origin = "Máquina"
                 ),
                 DailyExpense(
+                    id = 2,
                     amount = 2.0,
                     category = "Transporte",
                     date = System.currentTimeMillis() - 1000L * 60 * 60 * 2,
@@ -71,29 +70,53 @@ fun PreviewMainApp() {
                 )
             )
 
+            val todayFilteredRecords = remember(sampleRecords, todayType) {
+                val type = todayType
+                if (type == null) emptyList() else sampleRecords.filter { it.type == type }
+            }
+
             when (currentScreen) {
                 "home" -> HomeScreen(
                     lastCigaretteTimestamp = sampleRecords.firstOrNull { it.type == "cigarette" }?.timestamp,
                     todayCigarettesCount = 3,
                     todayBeersCount = 1,
-                    onCigaretteClick = {
-                        // Simula registrar y quedarse en home
-                    },
-                    onBeerClick = {
-                        // Simula registrar y quedarse en home
-                    },
+                    onCigaretteClick = { /* noop */ },
+                    onBeerClick = { /* noop */ },
                     onFoodClick = { currentScreen = "food" },
                     onViewRecordsClick = { currentScreen = "records" },
-                    onDeleteAllClick = { /* noop for preview */ },
+                    onDeleteAllClick = { /* noop */ },
                     onMoneyClick = { currentScreen = "dailyExpense" },
-                    onViewExpensesClick = { currentScreen = "expenseRecords" }
+                    onViewExpensesClick = { currentScreen = "expenseRecords" },
+                    onTodayCigarettesClick = {
+                        todayType = "cigarette"
+                        currentScreen = "todayRecords/cigarette"
+                    },
+                    onTodayBeersClick = {
+                        todayType = "beer"
+                        currentScreen = "todayRecords/beer"
+                    },
+                )
+
+                "todayRecords/cigarette" -> TodayRecordsScreen(
+                    type = "cigarette",
+                    records = todayFilteredRecords,
+                    onBackClick = { currentScreen = "home" },
+                    onDeleteTodayClick = { /* noop */ },
+                    onDeleteRecordConfirm = { /* noop */ },
+                )
+
+                "todayRecords/beer" -> TodayRecordsScreen(
+                    type = "beer",
+                    records = todayFilteredRecords,
+                    onBackClick = { currentScreen = "home" },
+                    onDeleteTodayClick = { /* noop */ },
+                    onDeleteRecordConfirm = { /* noop */ },
                 )
 
                 "food" -> FoodScreen(
                     description = foodDescription,
                     onDescriptionChange = { foodDescription = it },
                     onRegistrarClick = {
-                        // simula registrar y volver a home
                         foodDescription = ""
                         currentScreen = "home"
                     },
@@ -119,14 +142,12 @@ fun PreviewMainApp() {
                     onOriginChange = { origin = it; showExpenseError = false },
                     onRegisterExpenseClick = {
                         val ok = isAmountValid && category.isNotBlank() && origin.isNotBlank()
+                        showExpenseError = !ok
                         if (ok) {
                             amountText = ""
                             category = ""
                             origin = ""
-                            showExpenseError = false
                             currentScreen = "home"
-                        } else {
-                            showExpenseError = true
                         }
                     },
                     onBackClick = {
@@ -142,13 +163,15 @@ fun PreviewMainApp() {
                 "records" -> RecordsScreen(
                     records = sampleRecords,
                     onBackClick = { currentScreen = "home" },
-                    onExportClick = { currentScreen = "home" }
+                    onExportClick = { /* noop */ },
+                    onDeleteRecordConfirm = { /* noop */ },
                 )
 
                 "expenseRecords" -> ExpenseRecordsScreen(
                     expenseRecords = sampleExpenses,
                     onBackClick = { currentScreen = "home" },
-                    onExportClick = { currentScreen = "home" }
+                    onExportClick = { /* noop */ },
+                    onDeleteExpenseConfirm = { /* noop */ },
                 )
             }
 

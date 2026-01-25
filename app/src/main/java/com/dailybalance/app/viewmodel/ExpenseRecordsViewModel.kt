@@ -21,6 +21,13 @@ class ExpenseRecordsViewModel @Inject constructor(private val dailyExpenseReposi
         }
     }
 
+    fun deleteExpense(expense: DailyExpense) {
+        viewModelScope.launch {
+            dailyExpenseRepository.delete(expense)
+            _expenseRecords.value = dailyExpenseRepository.getAll()
+        }
+    }
+
     fun exportExpensesToCsv(expenses: List<DailyExpense>): String {
         val header = "Cantidad,Categoría,Fecha,Origen,Nota"
         val dateFormat = java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss", java.util.Locale.getDefault())

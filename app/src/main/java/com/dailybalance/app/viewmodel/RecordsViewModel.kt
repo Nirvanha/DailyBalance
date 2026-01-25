@@ -16,6 +16,12 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
     private val _records = MutableStateFlow<List<ActionRecord>>(emptyList())
     val records: StateFlow<List<ActionRecord>> = _records
 
+    private val _todayTypeRecords = MutableStateFlow<List<ActionRecord>>(emptyList())
+    val todayTypeRecords: StateFlow<List<ActionRecord>> = _todayTypeRecords
+
+    private val _todayType = MutableStateFlow<String?>(null)
+    val todayType: StateFlow<String?> = _todayType
+
     private val _lastCigaretteTimestamp = MutableStateFlow<Long?>(null)
     val lastCigaretteTimestamp: StateFlow<Long?> = _lastCigaretteTimestamp
 
@@ -66,10 +72,31 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
         }
     }
 
+    fun requestTodayRecordsByType(type: String) {
+        val (startOfDay, endOfDay) = todayRangeMillis()
+        _todayType.value = type
+        viewModelScope.launch {
+            _todayTypeRecords.value = actionRecordRepository.getByTypeBetween(type, startOfDay, endOfDay)
+        }
+    }
+
+    fun deleteTodayRecordsByType(type: String) {
+        val (startOfDay, endOfDay) = todayRangeMillis()
+        viewModelScope.launch {
+            actionRecordRepository.deleteByTypeBetween(type, startOfDay, endOfDay)
+            // Refresca la lista que se está mostrando.
+            _todayTypeRecords.value = actionRecordRepository.getByTypeBetween(type, startOfDay, endOfDay)
+            // Refresca contadores y banner en home.
+            refreshHomeStats()
+        }
+    }
+
     fun deleteAll() {
         viewModelScope.launch {
             actionRecordRepository.deleteAll()
             _records.value = emptyList()
+            _todayTypeRecords.value = emptyList()
+            _todayType.value = null
             _lastCigaretteTimestamp.value = null
             _todayCigarettesCount.value = 0
             _todayBeersCount.value = 0
@@ -92,6 +119,12 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
             } else if (type == "beer") {
                 _todayBeersCount.value = _todayBeersCount.value + 1
             }
+
+            // Si la pantalla de "hoy" está mostrando este tipo, refrescamos para que aparezca el nuevo ítem.
+            if (_todayType.value == type) {
+                val (startOfDay, endOfDay) = todayRangeMillis(record.timestamp)
+                _todayTypeRecords.value = actionRecordRepository.getByTypeBetween(type, startOfDay, endOfDay)
+            }
         }
     }
 
@@ -104,5 +137,25 @@ class RecordsViewModel @Inject constructor(private val actionRecordRepository: A
             "${record.type},$formattedDate,$desc"
         }
         return (listOf(header) + rows).joinToString("\n")
+    }
+
+    fun deleteRecord(record: ActionRecord) {
+        viewModelScope.launch {
+            actionRecordRepository.deleteById(record.id)
+
+            // Refresco de pantallas.
+            // 1) Si estamos en la pantalla de registros completa.
+            _records.value = actionRecordRepository.getAll()
+
+            // 2) Si estamos en la pantalla de hoy por tipo, refrescamos para mantener consistencia.
+            val currentTodayType = _todayType.value
+            if (currentTodayType != null) {
+                val (startOfDay, endOfDay) = todayRangeMillis()
+                _todayTypeRecords.value = actionRecordRepository.getByTypeBetween(currentTodayType, startOfDay, endOfDay)
+            }
+
+            // 3) Home stats.
+            refreshHomeStats()
+        }
     }
 }

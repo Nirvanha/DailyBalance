@@ -1,6 +1,13 @@
 package com.dailybalance.app.ui.records
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -26,13 +33,14 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun RecordsScreen(
+fun TodayRecordsScreen(
+    type: String,
     records: List<ActionRecord>,
     onBackClick: () -> Unit,
-    onExportClick: () -> Unit,
+    onDeleteTodayClick: () -> Unit,
     onDeleteRecordConfirm: (ActionRecord) -> Unit,
 ) {
-    val dateFormat = remember { SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
 
     var recordToDelete by remember { mutableStateOf<ActionRecord?>(null) }
 
@@ -55,6 +63,12 @@ fun RecordsScreen(
         )
     }
 
+    val (title, emptyText) = when (type) {
+        "cigarette" -> "Cigarros de hoy" to "No hay cigarros registrados hoy."
+        "beer" -> "Cervezas de hoy" to "No hay cervezas registradas hoy."
+        else -> "Registros de hoy" to "No hay registros hoy."
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -62,23 +76,24 @@ fun RecordsScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Registros", fontSize = 24.sp)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = title, fontSize = 24.sp)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (records.isEmpty()) {
+            Text(text = emptyText, style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(records, key = { it.id }) { record ->
-                val formattedDate = dateFormat.format(Date(record.timestamp))
+                val formattedTime = dateFormat.format(Date(record.timestamp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val line = if (record.type == "comida" && !record.description.isNullOrBlank()) {
-                        "Comida - $formattedDate - ${record.description}"
-                    } else {
-                        "${record.type} - $formattedDate"
-                    }
-                    Text(line, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    Text(text = formattedTime, fontSize = 16.sp, modifier = Modifier.weight(1f))
 
                     IconButton(onClick = { recordToDelete = record }) {
                         Icon(
@@ -92,12 +107,16 @@ fun RecordsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Button(onClick = onBackClick) { Text("Back") }
-            Button(onClick = onExportClick) { Text("Exportar registros") }
+            Button(onClick = onBackClick) { Text("Volver") }
+            Button(
+                onClick = onDeleteTodayClick,
+                enabled = records.isNotEmpty()
+            ) { Text("Borrar hoy") }
         }
     }
 }

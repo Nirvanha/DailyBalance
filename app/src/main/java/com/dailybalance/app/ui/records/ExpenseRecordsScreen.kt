@@ -8,8 +8,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,19 +26,38 @@ import com.dailybalance.app.data.DailyExpense
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-
 
 @Composable
 fun ExpenseRecordsScreen(
     expenseRecords: List<DailyExpense>,
     onBackClick: () -> Unit,
-    onExportClick: () -> Unit
+    onExportClick: () -> Unit,
+    onDeleteExpenseConfirm: (DailyExpense) -> Unit,
 ) {
     val dateFormat = remember { SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()) }
     var sortColumn by remember { mutableStateOf("date") }
     var sortAscending by remember { mutableStateOf(false) }
+
+    var expenseToDelete by remember { mutableStateOf<DailyExpense?>(null) }
+
+    if (expenseToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { expenseToDelete = null },
+            title = { Text("Confirmar borrado") },
+            text = { Text("¿Quieres borrar este gasto?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteExpenseConfirm(expenseToDelete!!)
+                        expenseToDelete = null
+                    }
+                ) { Text("Borrar") }
+            },
+            dismissButton = {
+                Button(onClick = { expenseToDelete = null }) { Text("Cancelar") }
+            }
+        )
+    }
 
     val sortedRecords = remember(expenseRecords, sortColumn, sortAscending) {
         expenseRecords.sortedWith(compareBy<DailyExpense> {
@@ -114,18 +139,21 @@ fun ExpenseRecordsScreen(
                     }
                 }
             )
+            // Columna acciones
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("", modifier = Modifier.width(28.dp))
         }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-        )  {
-            items(sortedRecords) { expense ->
+        ) {
+            items(sortedRecords, key = { it.id }) { expense ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .fillMaxWidth()
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -134,9 +162,18 @@ fun ExpenseRecordsScreen(
                     Text(text = dateFormat.format(Date(expense.date)), fontSize = 16.sp, modifier = Modifier.width(160.dp))
                     Text(text = expense.origin ?: "", fontSize = 16.sp, modifier = Modifier.width(120.dp))
                     Text(text = expense.note ?: "", fontSize = 16.sp, modifier = Modifier.width(160.dp))
+
+                    IconButton(onClick = { expenseToDelete = expense }) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Borrar",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
+
         Spacer(modifier = Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

@@ -1,18 +1,19 @@
 package com.dailybalance.app.ui.home
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,34 +38,28 @@ fun HomeScreen(
     onViewRecordsClick: () -> Unit,
     onDeleteAllClick: () -> Unit,
     onMoneyClick: () -> Unit,
-    onViewExpensesClick: () -> Unit
+    onViewExpensesClick: () -> Unit,
+    onTodayCigarettesClick: () -> Unit,
+    onTodayBeersClick: () -> Unit,
 ) {
-    var bannerText by remember(lastCigaretteTimestamp) { mutableStateOf<String?>(null) }
-    var elapsedMs by remember(lastCigaretteTimestamp) { mutableStateOf<Long?>(null) }
-
-    LaunchedEffect(lastCigaretteTimestamp) {
-        if (lastCigaretteTimestamp == null) {
-            bannerText = null
-            elapsedMs = null
-            return@LaunchedEffect
-        }
-
-        fun computeElapsed(): Long {
-            val now = System.currentTimeMillis()
-            return max(0L, now - lastCigaretteTimestamp)
-        }
-
-        fun recompute() {
-            val e = computeElapsed()
-            elapsedMs = e
-            bannerText = formatElapsed(e)
-        }
-
-        recompute()
+    // Ticker estable: evita reiniciar/cancelar el bucle cada vez que cambia el timestamp.
+    // Esto ayuda a que el banner no "desaparezca y reaparezca" en un frame intermedio.
+    var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
         while (true) {
+            nowMs = System.currentTimeMillis()
             delay(30_000L)
-            recompute()
         }
+    }
+
+    val elapsedMs: Long? by remember(lastCigaretteTimestamp, nowMs) {
+        derivedStateOf {
+            lastCigaretteTimestamp?.let { ts -> max(0L, nowMs - ts) }
+        }
+    }
+
+    val bannerText: String? by remember(elapsedMs) {
+        derivedStateOf { elapsedMs?.let(::formatElapsed) }
     }
 
     Column(
@@ -74,22 +69,31 @@ fun HomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        val localElapsedMs = elapsedMs
-        if (bannerText != null && localElapsedMs != null) {
-            MotivationalSmokeFreeBanner(
-                elapsedLabel = bannerText!!,
-                elapsedMs = localElapsedMs,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-            )
+        // Mantén el layout estable: no desmontar el bloque entero evita el salto visual.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 14.dp)
+                .animateContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (bannerText != null && elapsedMs != null) {
+                MotivationalSmokeFreeBanner(
+                    elapsedLabel = bannerText!!,
+                    elapsedMs = elapsedMs!!,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 10.dp)
+                )
+            }
 
+            // Los contadores no deberían desaparecer al pulsar (siempre visibles).
             TodayCountersRow(
                 cigarettes = todayCigarettesCount,
                 beers = todayBeersCount,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 14.dp)
+                modifier = Modifier.fillMaxWidth(),
+                onCigarettesClick = onTodayCigarettesClick,
+                onBeersClick = onTodayBeersClick,
             )
         }
 
@@ -158,7 +162,9 @@ fun HomeScreen(
 private fun TodayCountersRow(
     cigarettes: Int,
     beers: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCigarettesClick: () -> Unit,
+    onBeersClick: () -> Unit,
 ) {
     Row(
         modifier = modifier,
@@ -168,12 +174,14 @@ private fun TodayCountersRow(
         StatChip(
             label = "Cigarettes today",
             value = cigarettes,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            onClick = onCigarettesClick,
         )
         StatChip(
             label = "Beers today",
             value = beers,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            onClick = onBeersClick,
         )
     }
 }
@@ -182,10 +190,17 @@ private fun TodayCountersRow(
 private fun StatChip(
     label: String,
     value: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (onClick != null) {
+                Modifier.clickable(onClick = onClick)
+            } else {
+                Modifier
+            }
+        ),
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = MaterialTheme.shapes.large,
